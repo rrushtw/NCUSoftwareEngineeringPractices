@@ -1,10 +1,17 @@
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Function;
+
 /* Class AVLTree */
 class AVLTree {
     private AVLNode root;
+    private List<AVLNode> elements;
 
     /* Constructor */
     public AVLTree() {
         root = null;
+        elements = new ArrayList<>();
     }
 
     /* Function to check if tree is empty */
@@ -15,83 +22,181 @@ class AVLTree {
     /* Make the tree logically empty */
     public void makeEmpty() {
         root = null;
+        elements = new ArrayList<>();
     }
 
     /* Function to insert data */
     public void insert(int data) {
-        root = insert(data, root);
+        AVLNode element = new AVLNode(data);
+
+        if (root == null) {
+            root = element;
+        } else {
+            root.put(element);
+        }
+
+        elements.add(element);
+        rebalance();
     }
 
-    /* Function to get height of node */
-    private int height(AVLNode t) {
-        return t == null ? -1 : t.height;
+    private void rebalance() {
+        if (elements.size() < 3) {
+            return;
+        }
+
+        for (int i = 0; i < 1000; i++) {
+            AVLNode target = elements.stream()
+                    .filter(x -> x.getAbsoluteBF() > 1)// WHERE BalanceFactor > 1
+                    .sorted(Comparator.comparing(new Function<AVLNode, Integer>() {
+                        @Override
+                        public Integer apply(AVLNode node) {
+                            return node.getAbsoluteBF();
+                        }
+                    }))// ORDER BY BalanceFactor ASC
+                    .findFirst().orElse(null);
+
+            if (target == null) {
+                break;
+            }
+
+            // rearrange
+            int targetBF = target.getBalanceFactor();
+
+            // if (Math.abs(targetBF) != 2){
+            // System.out.println(targetBF);
+            // }
+
+            if (targetBF == 2) {
+                int leftChildBF = target.left.getBalanceFactor();
+
+                // if (Math.abs(leftChildBF) != 1){
+                // System.out.println(leftChildBF);
+                // }
+
+                if (leftChildBF == 1) {
+                    LLRoatation(target);
+                    continue;
+                }
+
+                if (leftChildBF == -1) {
+                    LRRotation(target);
+                    continue;
+                }
+            }
+
+            if (targetBF == -2) {
+                int rightChildBF = target.right.getBalanceFactor();
+
+                // if (Math.abs(rightChildBF) != 1){
+                // System.out.println(rightChildBF);
+                // }
+
+                if (rightChildBF == 1) {
+                    RLRotation(target);
+                    continue;
+                }
+
+                if (rightChildBF == -1) {
+                    RRRoatation(target);
+                    continue;
+                }
+            }
+        }
     }
 
-    /* Function to max of left/right node */
-    private int max(int lhs, int rhs) {
-        return lhs > rhs ? lhs : rhs;
+    private void replaceConnection(AVLNode originalNode, AVLNode newNode) {
+        AVLNode parent = elements.stream()
+                .filter(x -> x.left == originalNode || x.right == originalNode)
+                .findFirst().orElse(null);
+
+        if (root == originalNode) {
+            root = newNode;
+            return;
+        }
+
+        if (parent.left == originalNode) {
+            parent.left = newNode;
+            return;
+        }
+
+        if (parent.right == originalNode) {
+            parent.right = newNode;
+            return;
+        }
     }
 
-    /* Function to insert data recursively */
-    private AVLNode insert(int x, AVLNode t) {
-        if (t == null)
-            t = new AVLNode(x);
-        else if (x < t.data) {
-            t.left = insert(x, t.left);
-            if (height(t.left) - height(t.right) == 2)
-                if (x < t.left.data)
-                    t = rotateWithLeftChild(t.left);
-                else
-                    t = doubleWithLeftChild(t);
-        } else if (x > t.data) {
-            t.right = insert(x, t.right);
-            if (height(t.right) - height(t.left) == 2)
-                if (x > t.right.data)
-                    t = rotateWithRightChild(t.right);
-                else
-                    t = doubleWithRightChild(t);
-        } else
-            ; // Duplicate; do nothing
-        t.height = max(height(t.left), height(t.right)) + 1;
-        return t;
+    private void LLRoatation(AVLNode originalNode) {
+        AVLNode newNode = originalNode.left;
+        originalNode.left = null;
+
+        if (newNode.right == null) {
+            newNode.right = originalNode;
+        } else {// newNode.right != null
+            AVLNode temp = newNode.right;
+            newNode.right = originalNode;
+            newNode.put(temp);
+        }
+
+        replaceConnection(originalNode, newNode);
     }
 
-    /* Rotate binary tree node with left child */
-    private AVLNode rotateWithLeftChild(AVLNode k2) {
-        AVLNode k1 = k2.left;
-        k2.right = k1.left;
-        k1.left = k2;
-        k2.height = max(height(k2.left), height(k2.right)) + 1;
-        k1.height = max(height(k1.left), k2.height) + 1;
-        return k1;
+    private void RRRoatation(AVLNode originalNode) {
+        AVLNode newNode = originalNode.right;
+        originalNode.right = null;
+
+        if (newNode.left == null) {
+            newNode.left = originalNode;
+        } else {// newNode.left != null
+            AVLNode temp = newNode.left;
+            newNode.left = originalNode;
+            newNode.put(temp);
+        }
+
+        replaceConnection(originalNode, newNode);
     }
 
-    /* Rotate binary tree node with right child */
-    private AVLNode rotateWithRightChild(AVLNode k1) {
-        AVLNode k2 = k1.right;
-        k1.left = k2.right;
-        k2.right = k1;
-        k1.height = max(height(k1.left), height(k1.right)) + 1;
-        k2.height = max(height(k2.right), k1.height) + 1;
-        return k2;
+    private void LRRotation(AVLNode originalNode) {
+        AVLNode newNode = originalNode.left.right; // pick the left.right as new node
+        originalNode.left.right = null;// reset the connection
+
+        List<AVLNode> tempNodes = new ArrayList<>();
+        if (newNode.left != null)
+            tempNodes.add(newNode.left);
+        if (newNode.right != null)
+            tempNodes.add(newNode.right);
+
+        newNode.left = originalNode.left;// pick the left as left child
+        originalNode.left = null;// reset the connnection
+
+        newNode.right = originalNode;// pick original node as right child
+
+        for (AVLNode tempNode : tempNodes) {
+            newNode.put(tempNode);
+        }
+
+        replaceConnection(originalNode, newNode);
     }
 
-    /**
-     * Double rotate binary tree node: first left child
-     * with its right child; then node k3 with new left child
-     */
-    private AVLNode doubleWithLeftChild(AVLNode k3) {
-        k3.left = rotateWithRightChild(k3.left);
-        return rotateWithLeftChild(k3);
-    }
+    private void RLRotation(AVLNode originalNode) {
+        AVLNode newNode = originalNode.right.left; // pick the right.left as new node
+        originalNode.right.left = null;// reset the connection
 
-    /**
-     * Double rotate binary tree node: first right child
-     * with its left child; then node k1 with new right child
-     */
-    private AVLNode doubleWithRightChild(AVLNode k1) {
-        k1.right = rotateWithLeftChild(k1.right);
-        return rotateWithRightChild(k1);
+        List<AVLNode> tempNodes = new ArrayList<>();
+        if (newNode.right != null)
+            tempNodes.add(newNode.right);
+        if (newNode.left != null)
+            tempNodes.add(newNode.left);
+
+        newNode.right = originalNode.right;// pick the right as right child
+        originalNode.right = null;// reset the connnection
+
+        newNode.left = originalNode;// pick original node as left child
+
+        for (AVLNode tempNode : tempNodes) {
+            newNode.put(tempNode);
+        }
+
+        replaceConnection(originalNode, newNode);
     }
 
     /* Functions to count number of nodes */
