@@ -410,6 +410,13 @@ namespace UMLEditor.Shapes
                     Ports[i].Move(offsetX, offsetY);
                 }
             }
+
+            if (Shapes == null || Shapes.Count == 0) return;
+
+            foreach(Shape childShape in Shapes)
+            {
+                childShape.Move(offsetX, offsetY);
+            }
         }
 
         /// <summary>
