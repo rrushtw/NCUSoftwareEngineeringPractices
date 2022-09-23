@@ -212,10 +212,10 @@ namespace UMLEditor.Modes
         /// <param name="selectedArea">The <see cref="SelectedArea"/> to be updated.</param>
         private void UpdateSelectedArea(Shape selectedArea)
         {
-            int left = _mousePressedPoint.X;
-            int top = _mousePressedPoint.Y;
-            int width = _currentMousePoint.X - _mousePressedPoint.X;
-            int height = _currentMousePoint.Y - _mousePressedPoint.Y;
+            int left = Math.Min(_mousePressedPoint.X, _currentMousePoint.X);
+            int top = Math.Min(_mousePressedPoint.Y, _currentMousePoint.Y);
+            int width = Math.Abs(_currentMousePoint.X - _mousePressedPoint.X);
+            int height = Math.Abs(_currentMousePoint.Y - _mousePressedPoint.Y);
 
             selectedArea.SetLocation(left, top);
             selectedArea.SetSize(width, height);
