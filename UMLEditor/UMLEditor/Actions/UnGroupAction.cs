@@ -31,9 +31,9 @@ namespace UMLEditor.Actions
         {
             Shape[] selectedShapes = Canvas.SelectedShapes;
 
-            if (selectedShapes.Length == 0)
+            if (selectedShapes.Length != 1)
             {
-                MessageBox.Show("Please select 1 or more object for ungrouping", "Warning", MessageBoxButtons.OK,
+                MessageBox.Show("Please select ONLY 1 object for ungrouping", "Warning", MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
             }
