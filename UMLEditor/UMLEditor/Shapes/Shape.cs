@@ -278,9 +278,13 @@ namespace UMLEditor.Shapes
         {
             Debug.Assert(Combinations != null);
 
-            while (Combinations.Count > 0)
+            //Do not use Combinations directly.
+            List<Combination> tempList = new List<Combination>();
+            tempList.AddRange(Combinations);
+
+            foreach (var c in tempList)
             {
-                Combinations[0].Destroy();
+                c.Destroy();
             }
         }
 
